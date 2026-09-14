@@ -1,4 +1,15 @@
-{ pkgs }:
+{
+  pkgs,
+  commands ? {
+    boot = "cmd/boot";
+    containers = "cmd/containers";
+    egress = "cmd/egress";
+    pid1 = "cmd/pid1";
+    shim = "cmd/shim";
+    volume-worker = "cmd/volumeworker";
+  },
+  pid1Package ? "cmd/pid1",
+}:
 
 let
   commonEnv.GOTOOLCHAIN = "local";
@@ -29,7 +40,7 @@ let
   common = {
     version = "0";
     src = pkgs.lib.cleanSource ../tinfoil;
-    vendorHash = "sha256-Q4sCP12QNOvUROwZMvysAwSMYXLctBJvWfN4rv1jIA0=";
+    vendorHash = "sha256-whbW5MHPekOiirTXvm3PRDdb9Kib8Dgu82JRY6doZYU=";
     ldflags = [
       "-s"
       "-w"
@@ -54,28 +65,18 @@ let
 
   runtime = buildCgoCommand {
     pname = "tinfoil-runtime";
-    subPackages = [
-      "cmd/boot"
-      "cmd/containers"
-      "cmd/egress"
-      "cmd/pid1"
-      "cmd/shim"
-      "cmd/volumeworker"
-    ];
-    postInstall = ''
-      for command in boot containers egress pid1 shim; do
-        mv "$out/bin/$command" "$out/bin/tinfoil-$command"
-      done
-      mv "$out/bin/volumeworker" "$out/bin/tinfoil-volume-worker"
-    '';
+    subPackages = builtins.attrValues commands;
+    postInstall = pkgs.lib.concatStringsSep "\n" (pkgs.lib.mapAttrsToList (name: package: ''
+      mv "$out/bin/${builtins.baseNameOf package}" "$out/bin/tinfoil-${name}"
+    '') commands);
   };
 
   debugPID1 = buildCgoCommand {
     pname = "tinfoil-debug-pid1";
-    subPackages = [ "cmd/pid1" ];
+    subPackages = [ pid1Package ];
     tags = [ "tinfoil_debug_image" ];
     postInstall = ''
-      mv "$out/bin/pid1" "$out/bin/tinfoil-pid1"
+      mv "$out/bin/${builtins.baseNameOf pid1Package}" "$out/bin/tinfoil-pid1"
     '';
   };
 
@@ -114,8 +115,8 @@ let
     checkPhase = ''
       runHook preCheck
       go test ./...
-      go test -race ./cmd/pid1 ./internal/boot/... ./internal/nvml
-      go test -tags=tinfoil_debug_image ./cmd/pid1
+      go test -race ./pid1 ./internal/boot/... ./internal/nvml ./cmd/sandbox
+      go test -tags=tinfoil_debug_image ./pid1
       go vet ./...
       runHook postCheck
     '';

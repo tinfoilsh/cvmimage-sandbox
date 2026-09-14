@@ -1,4 +1,28 @@
-{ pkgs }:
+{
+  pkgs,
+  name ? "cvmimage-runtime-packages-lock",
+  lockFile ? ./runtime-packages-lock.nix,
+  securitySnapshot ? {
+    timestamp = "20260615";
+    sha256 = "63d7fad5a61519948c6d47682e300b7d2f66038d42bcea8137c4d3477ed4aa09";
+  },
+  packageNames ? [
+    "ca-certificates"
+    "e2fsprogs"
+    "iproute2"
+    "nftables"
+    "libc6"
+    "libc-bin"
+    "libcap2"
+    "libxml2-16"
+    "libstdc++6"
+    "libgcc-s1"
+    "zlib1g"
+    "libtirpc3t64"
+    "libtirpc-common"
+    "libseccomp2"
+  ],
+}:
 
 let
   packageUrlPrefix = "https://snapshot.ubuntu.com/ubuntu/20260721T000000Z";
@@ -41,38 +65,21 @@ let
       component = "multiverse";
       sha256 = "649e6c37f2c1fa6b2d5081bc7714c9e2ad66083005bb80fab34c3c537781a1c9";
     })
-    (packageIndex {
-      timestamp = "20260615";
+    (packageIndex (securitySnapshot // {
       pocket = "resolute-security";
       component = "main";
-      sha256 = "63d7fad5a61519948c6d47682e300b7d2f66038d42bcea8137c4d3477ed4aa09";
-    })
+    }))
   ];
 
-  packageNames = [
-    "ca-certificates"
-    "e2fsprogs"
-    "iproute2"
-    "nftables"
-    "libc6"
-    "libc-bin"
-    "libcap2"
-    "libxml2-16"
-    "libstdc++6"
-    "libgcc-s1"
-    "zlib1g"
-    "libtirpc3t64"
-    "libtirpc-common"
-    "libseccomp2"
-  ];
+
 in
 {
   lock = pkgs.vmTools.debClosureGenerator {
-    name = "cvmimage-runtime-packages-lock";
+    inherit name;
     packagesLists = packageIndexes;
     urlPrefix = packageUrlPrefix;
     packages = packageNames;
   };
 
-  packages = pkgs.lib.flatten (import ./runtime-packages-lock.nix { inherit (pkgs) fetchurl; });
+  packages = pkgs.lib.flatten (import lockFile { inherit (pkgs) fetchurl; });
 }

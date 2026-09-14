@@ -92,7 +92,7 @@ jobs:
             --no-out-link -I . -A release-upload-cli)/bin/aws"
           for file in /tmp/out/*; do
             "$aws" s3 cp "$file" \
-              "s3://${R2_BUCKET}/cvm/$(basename "$file")" \
+              "s3://${R2_BUCKET}/cvm-sandbox/$(basename "$file")" \
               --only-show-errors --no-progress
           done
 
@@ -113,9 +113,9 @@ jobs:
             $PRERELEASE_FLAG \
             --title "$REF_NAME" \
             --notes "### Downloads
-          - Kernel: https://images.tinfoil.sh/cvm/tinfoil-inference-${REF_NAME}.vmlinuz
-          - Initrd: https://images.tinfoil.sh/cvm/tinfoil-inference-${REF_NAME}.initrd
-          - Disk: https://images.tinfoil.sh/cvm/tinfoil-inference-${REF_NAME}.raw
+          - Kernel: https://images.tinfoil.sh/cvm-sandbox/tinfoil-inference-${REF_NAME}.vmlinuz
+          - Initrd: https://images.tinfoil.sh/cvm-sandbox/tinfoil-inference-${REF_NAME}.initrd
+          - Disk: https://images.tinfoil.sh/cvm-sandbox/tinfoil-inference-${REF_NAME}.raw
 
           ### Manifest
           \`\`\`json
