@@ -37,10 +37,10 @@ jobs:
 
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
-      - name: Find repos with tinfoil-functions topic
+      - name: Find repos with tinfoil-sandbox topic
         id: repos
         run: |
-          RESPONSE=$(gh api 'search/repositories?q=topic:tinfoil-functions' 2>&1) || true
+          RESPONSE=$(gh api 'search/repositories?q=topic:tinfoil-sandbox' 2>&1) || true
 
           if echo "$RESPONSE" | jq -e '.items' > /dev/null 2>&1; then
             REPOS=$(echo "$RESPONSE" | jq -c '[.items[] | "\(.owner.login)/\(.name)"]')

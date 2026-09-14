@@ -1,9 +1,9 @@
 # Sandbox image
 
-Build the CPU sandbox with `nix-build -A sandbox.shipping-image -o result-sandbox`.
-The result contains `tinfoilcvm-sandbox.raw`, `.vmlinuz`, `.initrd`, and `.roothash`.
-The existing `shipping-image` and `debug-image` outputs still select inference.
-`sandbox.debug-image` adds the measured debug console.
+Build the sandbox with `nix-build -I . -A shipping-image -o result`. The result
+contains `tinfoilcvm.raw`, `.vmlinuz`, `.initrd`, and `.roothash`; `debug-image`
+adds the measured debug console. Both are the `sandbox.*` derivations; the
+inference variant is not exposed by this repository.
 
 The sandbox keeps the boot, shim, PID 1, and volume code in the `tinfoil` Go module.
 It omits Docker and containerd from its rootfs and keeps the NVIDIA modules,
@@ -52,5 +52,8 @@ format; it does not migrate older, unauthenticated sandbox disks.
 
 Run `nix-build -A checks` for unit tests, race checks, debug PID 1 tests, and vet.
 
-Release CI builds and publishes separate `tinfoil-inference-<version>` and
-`tinfoil-sandbox-<version>` artifacts, manifests, checksums, and provenance.
+Release CI publishes the sandbox under the standard `tinfoil-inference-<version>`
+artifact names: manifest, checksums, and provenance on the GitHub release, and
+the disk, kernel, and initrd at `https://images.tinfoil.sh/cvm-sandbox/`. A
+workload selects a release by adding `cvm-source` beside its `cvm-version`, as
+`sandbox/tinfoil-config.yml` shows.

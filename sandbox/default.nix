@@ -115,9 +115,9 @@ in
   package-lock = ubuntu.lock;
   kernel-artifacts = kernel.artifacts;
   debug-kernel-artifacts = debugKernel.artifacts;
-  shipping-image = image kernel.artifacts { basename = "tinfoilcvm-sandbox"; };
+  shipping-image = image kernel.artifacts { basename = "tinfoilcvm"; };
   debug-image = image debugKernel.artifacts {
-    basename = "tinfoilcvm-sandbox-debug";
+    basename = "tinfoilcvm-debug";
     debugLayer = rootfs.debugLayer;
   };
 }

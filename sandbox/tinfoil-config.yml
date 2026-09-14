@@ -3,7 +3,10 @@
 # here is covered by the release measurement. The orchestrator allowed to enroll
 # this sandbox's owner is part of the image itself (sandbox/cmd/sandbox), as is
 # the list of loopback ports the shim tunnels to.
-cvm-version: 0.14.3
+cvm-version: 0.15.0
+cvm-source:
+  repo: tinfoilsh/cvmimage-sandbox
+  artifacts: https://images.tinfoil.sh/cvm-sandbox
 
 cpus: 2
 memory: 2048

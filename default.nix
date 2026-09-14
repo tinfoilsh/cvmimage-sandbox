@@ -53,6 +53,7 @@ let
     debugLayer = rootfs.debugLayer;
     basename = "tinfoilcvm-debug";
   };
+  sandbox = import ./sandbox { inherit pkgs initrd repartSeed; };
 in
 go.packages
 // {
@@ -66,7 +67,7 @@ go.packages
   "debug-rootfs-layer" = rootfs.debugLayer;
   "runtime-package-lock" = runtimePackages.lock;
   "release-upload-cli" = pkgs.awscli2;
-  "shipping-image" = shippingImage;
-  "debug-image" = debugImage;
-  sandbox = import ./sandbox { inherit pkgs initrd repartSeed; };
+  "shipping-image" = sandbox.shipping-image;
+  "debug-image" = sandbox.debug-image;
+  inherit sandbox;
 }
