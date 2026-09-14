@@ -2,7 +2,6 @@ package volume
 
 import (
 	"bytes"
-	"crypto/sha512"
 	"encoding/hex"
 	"errors"
 	"os"
@@ -38,21 +37,17 @@ func TestWorkspaceValidation(t *testing.T) {
 	}
 }
 
-func TestWorkspaceExportPrecedesOwnerSealAndUnwindsFailures(t *testing.T) {
-	owner := "ssh-ed25519 canonical-owner\n"
-	want := sha512.Sum384([]byte(owner))
-	volumeIdentity, err := keySeal(bytes.Repeat([]byte{7}, KeyBytes))
+func TestWorkspaceExportPrecedesKeySealAndUnwindsFailures(t *testing.T) {
+	key := bytes.Repeat([]byte{7}, KeyBytes)
+	want, err := keySeal(key)
 	if err != nil {
 		t.Fatal(err)
-	}
-	if volumeIdentity == want {
-		t.Fatal("SSH owner seal equals volume-key seal")
 	}
 	for _, failure := range []string{"", WorkspacePath, NixPath, "seal"} {
 		t.Run(failure, func(t *testing.T) {
 			var mounted, removed []string
 			sealed := false
-			err := exportAndSeal("/data/workspace", owner,
+			err := exportAndSeal("/data/workspace", key,
 				func(source, target, fs string, flags uintptr, data string) error {
 					if source != "/data/workspace" || flags != unix.MS_BIND|unix.MS_REC || fs != "" || data != "" {
 						t.Fatal("export contract changed")
@@ -68,7 +63,7 @@ func TestWorkspaceExportPrecedesOwnerSealAndUnwindsFailures(t *testing.T) {
 						t.Fatal("sealed before exports")
 					}
 					if !bytes.Equal(digest, want[:]) {
-						t.Fatal("seal does not bind canonical SSH owner")
+						t.Fatal("seal is not the volume-key identity")
 					}
 					if failure == "seal" {
 						return errors.New("seal failed")

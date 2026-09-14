@@ -2,12 +2,10 @@ package volume
 
 import (
 	"context"
-	"crypto/sha512"
 	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"golang.org/x/sys/unix"
 	"tinfoil/internal/boot"
@@ -33,18 +31,14 @@ func ValidateWorkspace(spec Spec) error {
 }
 
 // OpenWorkspace uses the same authenticated disk format and formatter as Mount.
-// owner is the canonical authorized-key line accepted by enrollment, including
-// its trailing newline. Unlike runtime unlock, enrollment seals to this SSH
-// owner rather than to an identity derived from the volume key.
-func OpenWorkspace(ctx context.Context, spec Spec, key []byte, owner string) error {
+// Enrollment seals to the identity derived from the volume key, as runtime
+// unlock does, so a client recomputes the seal from its own copy of the key.
+func OpenWorkspace(ctx context.Context, spec Spec, key []byte) error {
 	if err := ValidateWorkspace(spec); err != nil {
 		return err
 	}
 	if len(key) != KeyBytes {
 		return fmt.Errorf("key is %d bytes, want %d", len(key), KeyBytes)
-	}
-	if strings.TrimSpace(owner) == "" {
-		return errors.New("workspace owner is required")
 	}
 	for _, target := range []string{WorkspacePath, NixPath} {
 		info, err := os.Lstat(target)
@@ -82,7 +76,7 @@ func OpenWorkspace(ctx context.Context, spec Spec, key []byte, owner string) err
 		if err := workspaceLayout(instance.dataPath(), spec.Overlays[0].Model); err != nil {
 			return err
 		}
-		return exportAndSeal(instance.dataPath(), owner, unix.Mount, unix.Unmount, extendSeal)
+		return exportAndSeal(instance.dataPath(), key, unix.Mount, unix.Unmount, extendSeal)
 	})
 }
 
@@ -116,7 +110,7 @@ func workspaceLayout(root, model string) error {
 	return nil
 }
 
-func exportAndSeal(source, owner string, mount func(string, string, string, uintptr, string) error, unmount func(string, int) error, extend func([]byte) error) (result error) {
+func exportAndSeal(source string, key []byte, mount func(string, string, string, uintptr, string) error, unmount func(string, int) error, extend func([]byte) error) (result error) {
 	var mounted []string
 	defer func() {
 		if result != nil {
@@ -131,6 +125,9 @@ func exportAndSeal(source, owner string, mount func(string, string, string, uint
 		}
 		mounted = append(mounted, target)
 	}
-	digest := sha512.Sum384([]byte(owner))
+	digest, err := keySeal(key)
+	if err != nil {
+		return err
+	}
 	return extend(digest[:])
 }

@@ -74,8 +74,7 @@ The API accepts one root-owned executable workspace with a `nix/store` overlay,
 then exports it recursively at `/workspace` and `/nix`. Persistent layout checks
 and both exports finish before the runtime register is extended.
 
-Runtime volume unlock continues to seal to the identity derived from its volume
-key. Sandbox enrollment instead extends SHA-384 of the canonical SSH public-key
-line, including its trailing newline. A failed disk unlock never reaches this
-extend. On TDX, clients must verify the resulting RTMR3 against the enrolled
-owner. SNP and ordinary VMs have no RTMR3 owner seal.
+Runtime volume unlock and sandbox enrollment both seal to the identity derived
+from the volume key. A failed disk unlock never reaches this extend. On TDX,
+clients verify the resulting RTMR3 against the seal they derive from their own
+copy of the key. SNP and ordinary VMs have no RTMR3 seal.

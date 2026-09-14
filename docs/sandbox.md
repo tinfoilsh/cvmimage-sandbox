@@ -33,8 +33,9 @@ audience, and an expiration. Its verifying key is compiled into the image.
 `POST /enroll` takes `Authorization: Bearer <permit>` and a JSON object with
 `key`, one SSH public-key line, and `volume`, base64 for the 64-byte workspace key.
 After the authenticated disk, workspace layout, and exports are ready, the
-volume library seals to SHA-384 of the canonical SSH key line, including its
-newline. Enrollment claims that owner and starts OpenSSH. Success returns 204;
+volume library extends RTMR3 with the identity derived from the workspace key,
+the same seal runtime unlock uses and the CLI recomputes from its `disk.key`.
+Enrollment claims that owner and starts OpenSSH. Success returns 204;
 a repeat returns 409. A failed unlock leaves ownership unclaimed. If SSH startup
 fails after sealing, enrollment returns 503 and keeps the owner claimed.
 
@@ -46,7 +47,7 @@ PID 1 does not restart enrollment within the same boot.
 
 After reboot, enroll again using a fresh permit and the same workspace key. The
 nonce and SSH host key change; workspace files and store-overlay writes persist.
-On TDX, verify the owner seal in RTMR3 in a fresh report. SNP and ordinary VMs do
+On TDX, verify the seal in RTMR3 in a fresh report. SNP and ordinary VMs do
 not provide this register. This image retains the existing authenticated-volume
 format; it does not migrate older, unauthenticated sandbox disks.
 
