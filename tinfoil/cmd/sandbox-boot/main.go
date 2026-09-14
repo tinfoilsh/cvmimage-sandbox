@@ -10,8 +10,9 @@ func bootSpec() boot.Spec {
 	return boot.Spec{
 		Stages:         variant.BootStages(),
 		Validate:       validate,
+		AttestDevices:  boot.InferenceSpec().AttestDevices,
 		IsolateModel:   func(*boot.Config, string) bool { return true },
-		DeviceEvidence: attestation.NoDeviceEvidence,
+		DeviceEvidence: attestation.CollectDeviceEvidence,
 	}
 }
 

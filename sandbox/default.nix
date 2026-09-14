@@ -52,12 +52,15 @@ let
     extraConfigs = [ ./kernel.config ];
     debugConsole = true;
   };
+  nvidia = import ../nix/nvidia-modules.nix { inherit pkgs kernel; };
+  nvattest = import ../nix/nvattest.nix { inherit pkgs; };
   rootfs = import ../nix/rootfs.nix {
     inherit pkgs;
     ubuntuDebs = ubuntu.packages;
     runtimeGo = go.packages.runtime-go;
     debugPID1 = go.packages.debug-pid1;
-    enableGPU = false;
+    inherit (nvattest) nvattest;
+    nvidiaModules = map (name: "${nvidia.modules}/${name}") nvidia.moduleNames;
     enableContainers = false;
     commands = [
       "boot"

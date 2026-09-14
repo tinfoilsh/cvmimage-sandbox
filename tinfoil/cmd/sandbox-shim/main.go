@@ -17,7 +17,7 @@ func shimSpec() shim.Spec {
 	return shim.Spec{
 		UpstreamHost:   upstreamHost,
 		PublishedPorts: publishedPorts,
-		DeviceEvidence: attestation.NoDeviceEvidence,
+		DeviceEvidence: attestation.CollectDeviceEvidence,
 	}
 }
 

@@ -18,7 +18,7 @@ const (
 
 func BootStages() []string {
 	return []string{
-		boot.StageConfig, boot.StageNetwork, boot.StageIdentity, boot.StageCPUAttestation,
+		boot.StageConfig, boot.StageNetwork, boot.StageIdentity, boot.StageCPUAttestation, boot.StageGPUAttestation,
 		boot.StageCertificate, boot.StageKeyserverSecrets, boot.StageModels, Stage, boot.StageShim,
 	}
 }
@@ -38,8 +38,8 @@ func Policies() map[hardening.Service]hardening.Policy {
 }
 
 func Validate(config *runtimeconfig.Config) error {
-	if config.GPUs != 0 || len(config.Containers) != 0 {
-		return fmt.Errorf("sandbox does not support GPUs or containers")
+	if len(config.Containers) != 0 {
+		return fmt.Errorf("sandbox does not support containers")
 	}
 	if len(config.Volumes) != 1 {
 		return fmt.Errorf("sandbox requires exactly one workspace volume")

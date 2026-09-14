@@ -6,8 +6,9 @@ The existing `shipping-image` and `debug-image` outputs still select inference.
 `sandbox.debug-image` adds the measured debug console.
 
 The sandbox keeps the boot, shim, PID 1, and volume code in the `tinfoil` Go module.
-It omits Docker, containerd, NVIDIA programs, NVIDIA modules, and nvattest from
-its rootfs. Its additional runtime is OpenSSH. Enrollment calls
+It omits Docker and containerd from its rootfs and keeps the NVIDIA modules,
+programs, and nvattest, so a workload declaring `gpus` attests and uses them as
+the inference image does. Its additional runtime is OpenSSH. Enrollment calls
 `internal/volume.OpenWorkspace` directly. A future storage service can replace
 that call without changing `/enroll`, SSH, or the workspace paths.
 

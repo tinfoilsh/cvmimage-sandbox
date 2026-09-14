@@ -18,7 +18,6 @@ func TestSandboxRequiresEnrollmentWorkspaceAndLoopbackAPI(t *testing.T) {
 		t.Fatal(err)
 	}
 	for i, change := range []func(*runtimeconfig.Config){
-		func(c *runtimeconfig.Config) { c.GPUs = 1 },
 		func(c *runtimeconfig.Config) { c.Containers = []runtimeconfig.Container{{Name: "container"}} },
 		func(c *runtimeconfig.Config) { c.Volumes = nil },
 		func(c *runtimeconfig.Config) { c.Volumes[0].KeySecret = "HOST_KEY" },

@@ -17,6 +17,7 @@ const (
 
 func lifecycleSpec() pid1.Spec {
 	return pid1.Spec{
+		BootstrapDevices: pid1.BootstrapNVIDIA,
 		StartWorkload:    startWorkload,
 		RequiredServices: requiredServices(),
 		ShutdownGroups:   shutdownGroups(),
@@ -36,4 +37,6 @@ func startWorkload(ctx context.Context, deps pid1.Deps, _ *os.File) error {
 
 func requiredServices() []string { return []string{sandboxName, pid1.ShimName} }
 
-func shutdownGroups() [][]string { return [][]string{{pid1.ShimName}, {sandboxName}} }
+func shutdownGroups() [][]string {
+	return [][]string{{pid1.ShimName}, {sandboxName}, {pid1.FabricManagerName, pid1.PersistencedName}}
+}

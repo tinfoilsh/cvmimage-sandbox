@@ -95,7 +95,19 @@ func EndpointReady(network, address string, limit time.Duration) func(context.Co
 	return endpointReady(network, address, limit)
 }
 
-const ShimName = shimName
+// BootstrapNVIDIA is the GPU bring-up a variant with its own workload opts into.
+func BootstrapNVIDIA(ctx context.Context, deps Deps) error {
+	return runNVIDIABootstrap(ctx, newSystemNVIDIA(), deps.OneShot, deps.Services.Start,
+		func(status nvidia.BootstrapStatus) error {
+			return nvidia.WriteBootstrapStatus(boot.NVIDIABootstrapStatusPath, status)
+		})
+}
+
+const (
+	ShimName          = shimName
+	PersistencedName  = persistencedName
+	FabricManagerName = fabricManagerName
+)
 
 func Main(spec Spec) {
 	log.SetFlags(0)
@@ -184,20 +196,6 @@ func run(parent context.Context, specs ...Spec) (result error) {
 		oneShot: func(ctx context.Context, command supervisor.Command) error {
 			return runOneShot(ctx, manager, command, oneShotStopGrace)
 		},
-		nvidia: func(ctx context.Context) error {
-			control := newSystemNVIDIA()
-			return runNVIDIABootstrap(
-				ctx,
-				control,
-				func(childCtx context.Context, command supervisor.Command) error {
-					return runOneShot(childCtx, manager, command, oneShotStopGrace)
-				},
-				services.Start,
-				func(status nvidia.BootstrapStatus) error {
-					return nvidia.WriteBootstrapStatus(boot.NVIDIABootstrapStatusPath, status)
-				},
-			)
-		},
 		debugFailure: parkDebugFailure,
 		measuredConfig: func() (*runtimeconfig.Config, error) {
 			return readMeasuredConfig(cmdline.Debug)
@@ -213,6 +211,7 @@ func run(parent context.Context, specs ...Spec) (result error) {
 		kill:        serviceKillGrace,
 		cmdline:     cmdline,
 	}
+	deps.nvidia = func(ctx context.Context) error { return BootstrapNVIDIA(ctx, deps.public()) }
 	return runLifecycle(parent, deps, readiness)
 }
 
