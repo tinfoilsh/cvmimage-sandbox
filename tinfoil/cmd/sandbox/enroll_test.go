@@ -140,11 +140,8 @@ func TestEnrollmentRetryAndSSHFailureKeepOwnershipConsistent(t *testing.T) {
 		body, _ := json.Marshal(map[string]string{"key": owner, "volume": base64.StdEncoding.EncodeToString(bytes.Repeat([]byte{1}, volumeKeyBytes))})
 		opens, starts := 0, 0
 		var spent []byte
-		box.openWorkspace = func(volumeKey []byte, line string) error {
+		box.openWorkspace = func(volumeKey []byte) error {
 			opens++
-			if line != owner {
-				t.Fatal("owner changed before volume seal")
-			}
 			if opens == 1 {
 				return errors.New("wrong volume key")
 			}

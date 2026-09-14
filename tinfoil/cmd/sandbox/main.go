@@ -184,7 +184,7 @@ type sandbox struct {
 	listening bool
 
 	enrolling     sync.Mutex
-	openWorkspace func([]byte, string) error
+	openWorkspace func([]byte) error
 	startSSH      func(string) error
 }
 
@@ -389,7 +389,7 @@ func (s *sandbox) enroll(w http.ResponseWriter, r *http.Request) {
 	if s.openWorkspace != nil {
 		open = s.openWorkspace
 	}
-	if err := open(volumeKey, line); err != nil {
+	if err := open(volumeKey); err != nil {
 		log.Printf("workspace refused the key: %v", err)
 		reply(w, http.StatusForbidden, failure{"workspace key refused"})
 		return
@@ -427,13 +427,14 @@ func workspaceKey(encoded string) ([]byte, error) {
 }
 
 // open spends the workspace key on the volume and, in the same step, seals the
-// boot to the owner's key. Sealing to that key rather than to a constant is
-// what lets a later client read the report and see which key the box was
-// opened for, instead of only that it was opened. The unlocked volume is then
-// the store nix and the shell run from: /workspace is bound at /nix so the
-// pack's merged store appears at the one path nix's own scripts hardcode.
-func (s *sandbox) open(key []byte, owner string) error {
-	return volume.OpenWorkspace(context.Background(), s.volume, key, owner)
+// boot to the identity derived from that key. A client holding the key
+// recomputes the same seal from its own copy, so the report shows which
+// workspace the box was opened for rather than only that it was opened. The
+// unlocked volume is then the store nix and the shell run from: /workspace is
+// bound at /nix so the pack's merged store appears at the one path nix's own
+// scripts hardcode.
+func (s *sandbox) open(key []byte) error {
+	return volume.OpenWorkspace(context.Background(), s.volume, key)
 }
 
 // prepare mints the host key and renders sshd's configuration. The host key is
