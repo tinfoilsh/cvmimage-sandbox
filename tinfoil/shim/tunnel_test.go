@@ -81,7 +81,7 @@ func tunnelServer(t *testing.T, port int, validator key.Validator) *httptest.Ser
 	}
 	att := &legacy.Document{Format: "https://tinfoil.sh/predicate/dummy/v2", Body: "deadbeef"}
 	shim := NewShimServer(validator, nil, att, tinfoilattestation.BodyV2{}, 0, id, nil, nil,
-		&config.Config{UpstreamPort: 9999}, &config.ExternalConfig{}, "127.0.0.1:9999", targets)
+		&config.Config{UpstreamPort: 9999}, &config.ExternalConfig{}, "127.0.0.1:9999", targets, containersHandler())
 
 	server := httptest.NewUnstartedServer(shim)
 	server.EnableHTTP2 = true

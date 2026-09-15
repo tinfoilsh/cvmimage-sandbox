@@ -60,7 +60,7 @@ func testAuthServer(t *testing.T, validator key.Validator, authenticatedEndpoint
 		Body:   "deadbeef",
 	}
 
-	return NewShimServer(validator, nil, att, tinfoilattestation.BodyV2{}, 0, id, nil, nil, cfg, extCfg, "127.0.0.1:9999", nil)
+	return NewShimServer(validator, nil, att, tinfoilattestation.BodyV2{}, 0, id, nil, nil, cfg, extCfg, "127.0.0.1:9999", nil, containersHandler())
 }
 
 func testServer(t *testing.T, paths []string, upstreamPort int) http.Handler {
@@ -86,7 +86,7 @@ func testFullServer(t *testing.T, paths []string, upstreamPort int) http.Handler
 		Body:   "deadbeef",
 	}
 	upstreamAddr := fmt.Sprintf("127.0.0.1:%d", upstreamPort)
-	return NewShimServer(nil, nil, att, tinfoilattestation.BodyV2{}, 0, id, nil, staticCollateralSource{}, cfg, extCfg, upstreamAddr, nil)
+	return NewShimServer(nil, nil, att, tinfoilattestation.BodyV2{}, 0, id, nil, staticCollateralSource{}, cfg, extCfg, upstreamAddr, nil, containersHandler())
 }
 
 func testObservabilityServer(t *testing.T, paths []string) http.Handler {
@@ -103,7 +103,7 @@ func testObservabilityServer(t *testing.T, paths []string) http.Handler {
 		Format: "https://tinfoil.sh/predicate/dummy/v2",
 		Body:   "deadbeef",
 	}
-	return NewObservabilityServer(att, tinfoilattestation.BodyV2{}, 0, id, nil, staticCollateralSource{}, cfg, extCfg)
+	return NewObservabilityServer(att, tinfoilattestation.BodyV2{}, 0, id, nil, staticCollateralSource{}, cfg, extCfg, containersHandler())
 }
 
 func TestV3AttestationReturns503WhenCollateralExpired(t *testing.T) {
@@ -120,6 +120,7 @@ func TestV3AttestationReturns503WhenCollateralExpired(t *testing.T) {
 		errorCollateralSource{},
 		&config.Config{},
 		&config.ExternalConfig{},
+		containersHandler(),
 	)
 	req := httptest.NewRequest(http.MethodGet, "/.well-known/tinfoil-attestation?nonce="+strings.Repeat("00", 32), nil)
 	rec := httptest.NewRecorder()
@@ -399,8 +400,8 @@ func TestBothServerPhasesUseImageDeviceEvidence(t *testing.T) {
 	att := &legacy.Document{Format: legacy.DummyV2, Body: "deadbeef"}
 	cfg, ext := &config.Config{}, &config.ExternalConfig{}
 	handlers := []http.Handler{
-		NewObservabilityServer(att, tinfoilattestation.BodyV2{}, 0, id, nil, nil, cfg, ext, provider),
-		NewShimServer(nil, nil, att, tinfoilattestation.BodyV2{}, 0, id, nil, nil, cfg, ext, "127.0.0.1:8080", nil, provider),
+		NewObservabilityServer(att, tinfoilattestation.BodyV2{}, 0, id, nil, nil, cfg, ext, containersHandler(), provider),
+		NewShimServer(nil, nil, att, tinfoilattestation.BodyV2{}, 0, id, nil, nil, cfg, ext, "127.0.0.1:8080", nil, containersHandler(), provider),
 	}
 	for _, handler := range handlers {
 		response := httptest.NewRecorder()

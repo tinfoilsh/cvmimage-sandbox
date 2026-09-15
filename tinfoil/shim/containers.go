@@ -1,8 +1,10 @@
 package shim
 
 import (
+	"encoding/json"
 	"net/http"
 	"os"
+	"time"
 
 	"tinfoil/internal/boot"
 )
@@ -21,5 +23,16 @@ func serveContainerStatusFile(path string) http.HandlerFunc {
 
 		w.Header().Set("Content-Type", "application/json")
 		_, _ = w.Write(data)
+	}
+}
+
+// NoContainers answers for an image that runs its workload without containers.
+func NoContainers() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(struct {
+			ObservedAt time.Time  `json:"observed_at"`
+			Containers []struct{} `json:"containers"`
+		}{time.Now().UTC(), []struct{}{}})
 	}
 }

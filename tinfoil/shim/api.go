@@ -200,6 +200,7 @@ func NewShimServer(
 	externalConfig *config.ExternalConfig,
 	upstreamAddr string,
 	tunnelTargets map[string]bool,
+	containers http.HandlerFunc,
 	providers ...tinfoilattestation.DeviceEvidenceProvider,
 ) http.Handler {
 	ehbpMiddleware := ehbpIdentity.Middleware()
@@ -286,7 +287,7 @@ func NewShimServer(
 		proxyHandler.ServeHTTP(w, r)
 	}))
 
-	registerObservabilityHandlers(mux, ehbpMiddleware, att, identityBody, expectedGPUs, ehbpIdentity, tlsCert, collateralSource, externalConfig, providers...)
+	registerObservabilityHandlers(mux, ehbpMiddleware, att, identityBody, expectedGPUs, ehbpIdentity, tlsCert, collateralSource, externalConfig, containers, providers...)
 
 	// Fail closed: an authenticated deployment with no validator must not tunnel.
 	if config.Authenticated && validator == nil {
@@ -304,11 +305,12 @@ func NewObservabilityServer(
 	collateralSource collateralSource,
 	config *config.Config,
 	externalConfig *config.ExternalConfig,
+	containers http.HandlerFunc,
 	providers ...tinfoilattestation.DeviceEvidenceProvider,
 ) http.Handler {
 	ehbpMiddleware := ehbpIdentity.Middleware()
 	mux := http.NewServeMux()
-	registerObservabilityHandlers(mux, ehbpMiddleware, att, identityBody, expectedGPUs, ehbpIdentity, tlsCert, collateralSource, externalConfig, providers...)
+	registerObservabilityHandlers(mux, ehbpMiddleware, att, identityBody, expectedGPUs, ehbpIdentity, tlsCert, collateralSource, externalConfig, containers, providers...)
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		writeWorkloadUnavailable(w)
 	})
@@ -335,6 +337,7 @@ func registerObservabilityHandlers(
 	tlsCert *tls.Certificate,
 	collateralSource collateralSource,
 	externalConfig *config.ExternalConfig,
+	containers http.HandlerFunc,
 	providers ...tinfoilattestation.DeviceEvidenceProvider,
 ) {
 	mux.Handle("/.well-known/tinfoil-attestation", ehbpMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -420,7 +423,7 @@ func registerObservabilityHandlers(
 
 	mux.HandleFunc("/.well-known/tinfoil-metrics", metrics.HandleMetrics(externalConfig))
 	mux.HandleFunc("/.well-known/metrics", metrics.HandlePrometheusMetrics(&externalConfig.Metadata, externalConfig.MetricsAPIKey))
-	mux.HandleFunc("/.well-known/tinfoil-containers", containersHandler())
+	mux.HandleFunc("/.well-known/tinfoil-containers", containers)
 	mux.HandleFunc(ehbpProtocol.KeysPath, ehbpIdentity.ConfigHandler)
 }
 
