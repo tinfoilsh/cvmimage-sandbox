@@ -46,14 +46,15 @@ type Spec struct {
 	UpstreamHost   func(string) string
 	PublishedPorts func(string) (map[string]bool, error)
 	DeviceEvidence tinfoilattestation.DeviceEvidenceProvider
+	Containers     http.HandlerFunc
 }
 
 func InferenceSpec() Spec {
-	return Spec{resolveUpstreamHost, publishedPorts, tinfoilattestation.CollectDeviceEvidence}
+	return Spec{resolveUpstreamHost, publishedPorts, tinfoilattestation.CollectDeviceEvidence, containersHandler()}
 }
 
 func Main(spec Spec) {
-	if spec.UpstreamHost == nil || spec.PublishedPorts == nil || spec.DeviceEvidence == nil {
+	if spec.UpstreamHost == nil || spec.PublishedPorts == nil || spec.DeviceEvidence == nil || spec.Containers == nil {
 		log.Fatal("incomplete shim spec")
 	}
 	flag.Parse()
@@ -189,7 +190,7 @@ func upgradeWhenReady(handler *atomic.Value, cert *atomic.Pointer[tls.Certificat
 		expectedGPUs := config.ExpectedGPUs
 		log.Printf("Expected %d GPU(s) for attestation", expectedGPUs)
 
-		observabilityHandler := NewObservabilityServer(att, identityBody, expectedGPUs, serverIdentity, realCertParsed, collateralCache, config, externalConfig, spec.DeviceEvidence)
+		observabilityHandler := NewObservabilityServer(att, identityBody, expectedGPUs, serverIdentity, realCertParsed, collateralCache, config, externalConfig, spec.Containers, spec.DeviceEvidence)
 		handler.Store(http.HandlerFunc(observabilityHandler.ServeHTTP))
 
 		log.Println("Shim observability ready")
@@ -261,7 +262,7 @@ func upgradeWhenReady(handler *atomic.Value, cert *atomic.Pointer[tls.Certificat
 			return fmt.Errorf("loading published ports: %w", err)
 		}
 
-		fullHandler := NewShimServer(validator, rateLimiter, att, identityBody, expectedGPUs, serverIdentity, realCertParsed, collateralCache, config, externalConfig, upstreamAddr, targets, spec.DeviceEvidence)
+		fullHandler := NewShimServer(validator, rateLimiter, att, identityBody, expectedGPUs, serverIdentity, realCertParsed, collateralCache, config, externalConfig, upstreamAddr, targets, spec.Containers, spec.DeviceEvidence)
 		handler.Store(http.HandlerFunc(fullHandler.ServeHTTP))
 
 		log.Println("Shim fully operational")

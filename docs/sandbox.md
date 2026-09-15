@@ -42,7 +42,9 @@ fails after sealing, enrollment returns 503 and keeps the owner claimed.
 SSH accepts only the enrolled public key and binds to loopback port 22. Connect
 through the shim's HTTP/2 CONNECT endpoint with authority `localhost:22`, checking
 the SSH fingerprint against `/healthz`. The shim also allows the fixed development
-ports in `tinfoil/cmd/sandbox-shim/main.go`. A sandbox process exit fails the boot;
+ports in `tinfoil/cmd/sandbox-shim/main.go`, and answers
+`/.well-known/tinfoil-containers` with an empty list, since nothing here runs in
+a container. A sandbox process exit fails the boot;
 PID 1 does not restart enrollment within the same boot.
 
 After reboot, enroll again using a fresh permit and the same workspace key. The
